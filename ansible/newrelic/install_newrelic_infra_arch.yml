@@ -1,0 +1,43 @@
+---
+- name: Install New Relic Infrastructure Agent on Arch Linux using paru
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure base-devel and git are installed (required for paru)
+      pacman:
+        name:
+          - base-devel
+          - git
+        state: present
+
+    - name: Clone paru AUR helper from GitHub
+      git:
+        repo: https://aur.archlinux.org/paru.git
+        dest: /tmp/paru
+        version: master
+
+    - name: Install paru AUR helper
+      shell: |
+        cd /tmp/paru &&
+        makepkg -si --noconfirm
+      args:
+        removes: /tmp/paru  # Clean up after installation
+
+    - name: Install newrelic-infra using paru
+      shell: |
+        paru -S newrelic-infra --noconfirm
+      args:
+        creates: /usr/bin/newrelic-infra  # Ensure idempotency
+
+    - name: Set New Relic license key
+      shell: |
+        sudo newrelic-infra -license-key YOUR_LICENSE_KEY
+      when: newrelic_license_key is defined
+      environment:
+        NEW_RELIC_LICENSE_KEY: "{{ newrelic_license_key }}"
+
+    - name: Start and enable newrelic-infra service
+      systemd:
+        name: newrelic-infra
+        state: started
+        enabled: yes

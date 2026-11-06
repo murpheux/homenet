@@ -1,0 +1,50 @@
+---
+- name: Install and configure sshd
+  hosts: servers
+  become: true # Use privilege escalation (sudo)
+  tasks:
+    - name: Ensure openssh-server is installed
+      ansible.builtin.package:
+        name: openssh-server
+        state: present
+      # Use the appropriate package manager name for your OS (e.g., 'openssh-server' for Debian/Ubuntu, 'openssh' for RHEL/CentOS)
+
+    - name: Ensure sshd service is running and enabled
+      ansible.builtin.service:
+        name: sshd
+        state: started
+        enabled: true
+      # The service name is typically 'sshd' (RHEL/CentOS) or 'ssh' (Debian/Ubuntu)
+
+    - name: Add the control node's public key to the remote host's authorized_keys
+      ansible.posix.authorized_key:
+        user: remote_user_name
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+        manage_dir: true # Ensures the ~/.ssh directory and permissions are correct
+
+    - name: Disable password authentication in sshd_config
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        validate: 'sshd -t %s' # Validates the config file syntax before applying
+      notify:
+        - Restart sshd service
+
+    - name: Ensure PubkeyAuthentication is enabled
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PubkeyAuthentication'
+        line: 'PubkeyAuthentication yes'
+        validate: 'sshd -t %s'
+      notify:
+        - Restart sshd service
+
+  handlers:
+    - name: Restart sshd service
+      ansible.builtin.service:
+        name: sshd
+        state: restarted
+      # Use 'sshd' or 'ssh' depending on the target OS
+

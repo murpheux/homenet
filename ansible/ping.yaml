@@ -1,0 +1,8 @@
+---
+- name: Ensure the web server is running
+  hosts: servers
+  gather_facts: false
+  tasks:
+    - name: Ping the hosts
+      ansible.builtin.ping:
+

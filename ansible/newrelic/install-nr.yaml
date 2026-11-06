@@ -1,0 +1,19 @@
+- name: Install New Relic
+  hosts: all
+  roles:
+    - role: newrelic.newrelic_install
+      vars:
+        targets:
+          - infrastructure
+          - logs
+          #- apm-php
+        tags:
+          foo: bar
+        install_timeout_seconds: 1000
+        verbosity: debug
+  environment:
+    NEW_RELIC_API_KEY: <API key>
+    NEW_RELIC_ACCOUNT_ID: <Account ID>
+    NEW_RELIC_REGION: <Region>
+    NEW_RELIC_APPLICATION_NAME: "My Application"
+    HTTPS_PROXY: "http://my.proxy:8888"

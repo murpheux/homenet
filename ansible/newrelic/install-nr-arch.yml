@@ -1,0 +1,29 @@
+---
+- name: Install New Relic on Arch Linux
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure curl is installed
+      pacman:
+        name: curl
+        state: present
+
+    - name: Download and run New Relic installation script
+      shell: |
+        curl -Ls https://download.newrelic.com/install/newrelic-cli/scripts/install.sh | bash && \
+        /usr/local/bin/newrelic install
+      args:
+        creates: /usr/local/bin/newrelic
+
+    - name: Set New Relic license key
+      shell: |
+        /usr/local/bin/newrelic config set license_key YOUR_LICENSE_KEY
+      when: newrelic_license_key is defined
+      environment:
+        NEW_RELIC_API_KEY: "{{ newrelic_license_key }}"
+
+    - name: Start New Relic service
+      systemd:
+        name: newrelic-infra
+        state: started
+        enabled: yes

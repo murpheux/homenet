@@ -1,0 +1,89 @@
+---
+- name: Update and upgrade Linux systems
+  hosts: servers
+  become: yes
+  gather_facts: yes
+
+  vars:
+    # Default flags for classic sudo
+    ansible_become_flags: "-n"
+
+  # -----------------------------
+  # Detect sudo vs sudo-rs
+  # -----------------------------
+  pre_tasks:
+    - name: Detect sudo implementation
+      command: sudo --version
+      register: sudo_version
+      changed_when: false
+      failed_when: false
+
+    - name: Set fact for sudo-rs detection
+      set_fact:
+        uses_sudo_rs: "{{ 'sudo-rs' in sudo_version.stdout or 'sudo-rs' in sudo_version.stderr }}"
+
+    - name: Adjust become flags for sudo-rs
+      set_fact:
+        ansible_become_flags: ""
+      when: uses_sudo_rs
+
+  tasks:
+
+    # -------------------------
+    # Arch Linux
+    # -------------------------
+    - name: Update and upgrade Arch Linux (Pacman)
+      block:
+        - name: Update package list and upgrade all packages (Arch)
+          pacman:
+            update_cache: true
+            upgrade: true
+      when: ansible_facts['os_family'] == "Archlinux"
+
+    # -------------------------
+    # Debian / Ubuntu
+    # -------------------------
+    - name: Update and upgrade Debian/Ubuntu (APT)
+      block:
+        - name: Update package list
+          apt:
+            update_cache: true
+
+        - name: Upgrade all packages
+          apt:
+            upgrade: dist
+
+        - name: Autoclean APT cache
+          apt:
+            autoclean: true
+
+        - name: Autoremove unused packages
+          apt:
+            autoremove: true
+      when: ansible_facts['os_family'] == "Debian"
+
+    # -------------------------
+    # RedHat / CentOS / Rocky / Alma
+    # -------------------------
+    - name: Update and upgrade Red Hat/CentOS (YUM/DNF)
+      block:
+        - name: Update all packages
+          yum:
+            name: "*"
+            state: latest
+            update_cache: true
+
+        - name: Clean YUM/DNF cache
+          command: yum clean all
+      when: ansible_facts['os_family'] == "RedHat"
+
+    # -------------------------
+    # Alpine Linux
+    # -------------------------
+    - name: Update and upgrade Alpine Linux (APK)
+      block:
+        - name: Update package list and upgrade all packages
+          apk:
+            update_cache: true
+            upgrade: true
+      when: ansible_facts['os_family'] == "Alpine"

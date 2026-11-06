@@ -1,0 +1,113 @@
+# =============================================================
+# Prometheus Configuration — Home Network
+# =============================================================
+# Swarm services (cAdvisor, Grafana) are reached by name on monitoring_network;
+# node_exporter runs outside Swarm on each host.
+# =============================================================
+
+global:
+  scrape_interval:     15s   # How often to scrape targets
+  evaluation_interval: 15s   # How often to evaluate rules
+  scrape_timeout:      10s
+
+  # Attach these labels to all time series scraped from this Prometheus
+  external_labels:
+    environment: "softcrafthome"
+
+# ---------------------------------------------------------------
+# Alertmanager (optional — comment out if not using)
+# ---------------------------------------------------------------
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # - alertmanager:9093
+
+# ---------------------------------------------------------------
+# Rule files (optional — add .rules files here when ready)
+# ---------------------------------------------------------------
+rule_files: []
+  # - "alerts/*.rules.yaml"
+
+# =============================================================
+# Scrape Configurations
+# =============================================================
+scrape_configs:
+
+  # -----------------------------------------------------------
+  # Prometheus itself
+  # -----------------------------------------------------------
+  - job_name: "prometheus"
+    static_configs:
+      - targets:
+          - "localhost:9090"
+        labels:
+          instance: "prometheus-server"
+
+  # -----------------------------------------------------------
+  # Node Exporter — host-level metrics (CPU, RAM, disk, net)
+  # Deploy node_exporter on each machine you want to monitor.
+  # Default port: 9100
+  # -----------------------------------------------------------
+  - job_name: "node_exporter"
+    static_configs:
+
+      # No `instance` override: each target keeps its own host:port instance label
+      # (a shared "desktop" label made the series from every host collide).
+      - targets:
+          - "jon:9100"         # dns (Raspberry Pi)
+        labels:
+          role: "dns"
+      - targets:
+          - "scarlet:9100"
+          - "gru:9100"
+          - "cass:9100"
+        labels:
+          role: "swarm-node"
+      - targets:
+          - "medusa:9100"
+        labels:
+          role: "workstation"
+
+  # -----------------------------------------------------------
+  # cAdvisor — Docker container metrics
+  # Run one cAdvisor instance per Docker host.
+  # Default port: 8080
+  # -----------------------------------------------------------
+  # cAdvisor runs as a global Swarm service; tasks.<service> resolves to every task
+  # on monitoring_network, so each node's cAdvisor is scraped directly.
+  - job_name: "cadvisor"
+    dns_sd_configs:
+      - names:
+          - "tasks.softcraftchow"
+        type: "A"
+        port: 8080
+    relabel_configs:
+      - target_label: role
+        replacement: "docker-host"
+
+    # cAdvisor can return a lot of metrics — drop ones you don't need
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: "container_(network_tcp_usage_total|tasks_state|cpu_load_average_10s)"
+        action: drop
+
+  # -----------------------------------------------------------
+  # Grafana — exposes its own metrics endpoint
+  # Requires `metrics_enabled = true` in grafana.ini / env var
+  # Default port: 3000
+  # -----------------------------------------------------------
+  - job_name: "grafana"
+    static_configs:
+      - targets:
+          - "softcraftbob:3000"   # Grafana service on monitoring_network
+        labels:
+          instance: "grafana"
+          role: "dashboards"
+    metrics_path: /metrics             # Grafana's metrics path
+
+# =============================================================
+# Storage (tweak retention to match your disk space)
+# Set as CLI flags in modules/prometheus (retention_time / retention_size).
+#
+# =============================================================

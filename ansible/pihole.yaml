@@ -1,0 +1,20 @@
+---
+- name: Install and configure Pi-hole
+  hosts: pihole_hosts
+  roles:
+    # Use the role name you installed in the previous step
+    - HomeSecExplorer.pihole
+  vars:
+    # Define required or custom configuration variables here
+    pihole:
+      config:
+        webserver:
+          api:
+            # Set a secure password for the web interface
+            password: "SomeMothersDoHaveThem..."
+        dns:
+          # Optionally set custom upstream DNS servers
+          upstreams:
+            - "1.1.1.1"
+            - "1.0.0.1"
+

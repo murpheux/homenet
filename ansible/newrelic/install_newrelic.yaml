@@ -1,0 +1,12 @@
+---
+- name: Install and configure New Relic Infrastructure agent
+  hosts: servers
+  become: yes  # This role requires elevated privileges
+  vars:
+    # Set your New Relic license key here
+    nrinfragent_config:
+      license_key: YOUR_NEW_RELIC_LICENSE_KEY
+  roles:
+    # Use the fully qualified name of the role
+    - newrelic.newrelic_install.newrelic_infrastructure
+

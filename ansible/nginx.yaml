@@ -1,0 +1,41 @@
+---
+- name: Configure Web Server
+  hosts: servers
+  become: yes # Run tasks with elevated privileges (sudo)
+  tasks:
+    - name: Ensure Nginx is installed
+      apt:
+        name: nginx
+        state: present
+    - name: Create a text file on the remote host
+      ansible.builtin.copy:
+        dest: "/var/www/html/index.html"
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Welcome to NGINX!</title>
+            <style>
+                body {
+                  width: 35em;
+                  margin: 0 auto;
+                  font-family: Tahoma, Verdana, Arial, sans-serif;
+                }
+                h1 {
+                  color: #333;
+                }
+                p {
+                  color: #666;
+                }
+            </style>
+          </head>
+          <body>
+              <h1>Welcome to NGINX!</h1>
+              <p>If you see this page, the NGINX web server is successfully installed and working.</p>
+              <p>For online documentation and support please refer to the official [nginx.org website](http://nginx.org/).<br/>
+              Commercial support is available at [nginx.com](http://nginx.com/).</p>
+              <p><em>Thank you for using NGINX.</em></p>
+          </body>
+          </html>
+        mode: '0644'
+

@@ -1,0 +1,1 @@
+docker stack deploy -c swarm-cleaner.yml cleanup

@@ -1,0 +1,73 @@
+services:
+  openclaw:
+    image: coollabsio/openclaw:latest
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+      # Direct gateway WebSocket access for CLI/client apps (token-auth)
+      - "${GATEWAY_PORT:-18789}:18789"
+    environment:
+      # Provider (at least one required)
+      #- ANTHROPIC_API_KEY=sk-ant-...
+      - OPENCODE_API_KEY=${OPENCODE_API_KEY}
+      - OPENCLAW_PRIMARY_MODEL=deepseek/deepseek-v4-flash
+      # SQLite state must live on local disk (unsupported on NFS); data stays on NFS
+      - OPENCLAW_STATE_DIR=/state
+      # Auth
+      - AUTH_USERNAME=${AUTH_USERNAME:-admin}
+      - AUTH_PASSWORD=${AUTH_PASSWORD}
+      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
+      # Reverse proxy attribution: the image's internal nginx proxies to the
+      # gateway over loopback and overwrites forwarded headers; trust that proxy
+      # Bind on all interfaces so CLI/app clients can reach the gateway directly
+      # on :18789 (token auth via OPENCLAW_GATEWAY_TOKEN)
+      # Control UI: allow the browser origins used to reach this instance
+      - OPENCLAW_CONFIG_JSON={"gateway":{"bind":"lan","auth":{"mode":"token"},"trustedProxies":["127.0.0.1"],"controlUi":{"allowedOrigins":["http://sclet:8080","http://softcraftscarlet:8080","http://10.10.2.80:8080","http://localhost:8080","http://127.0.0.1:8080"]}}}
+      # Browser sidecar
+      - BROWSER_CDP_URL=http://browser:9223
+      - BROWSER_DEFAULT_PROFILE=openclaw
+      - BROWSER_EVALUATE_ENABLED=true
+      # CORS / Allowed Origins (optional)
+      # - OPENCLAW_ALLOWED_ORIGINS=http://localhost:5173,https://app.example.com
+      # Dot-notation config (optional - for settings not covered by dedicated env vars)
+      # - OPENCLAW__channels__telegram__textChunkLimit=3500
+      # JSON config via env var (optional - partial or full config as JSON)
+      # - OPENCLAW_CONFIG_JSON={"agents":{"defaults":{"model":{"fallback":"gemini/gemini-3-pro"}}}}
+      # Hooks (optional)
+      # - HOOKS_ENABLED=true
+      # - HOOKS_TOKEN=my-hook-secret
+    volumes:
+      - openclaw-data:/data
+      - state:/state
+      # Optional: custom JSON config for complex settings (groups, plugins, etc.)
+      # - ./my-openclaw.json:/app/config/openclaw.json
+    depends_on:
+      - browser
+    restart: unless-stopped
+
+  browser:
+    image: coollabsio/openclaw-browser:latest
+    # No port exposure needed — proxied via openclaw at /browser/
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - CHROME_CLI=--remote-debugging-port=9222
+    volumes:
+      - browser-data:/config
+    shm_size: 2g
+    restart: unless-stopped
+
+volumes:
+  state:
+  openclaw-data:
+    driver: local
+    driver_opts:
+      type: nfs
+      device: ":/System/Volumes/Data/Users/Shared/nfs_share/docker_volumes/oclaw/data"
+      o: "addr=10.10.2.100,rw,resvport,soft,v3"
+  browser-data:
+    driver: local
+    driver_opts:
+      type: nfs
+      device: ":/System/Volumes/Data/Users/Shared/nfs_share/docker_volumes/oclaw/browser"
+      o: "addr=10.10.2.100,rw,resvport,soft,v3"

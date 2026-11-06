@@ -1,0 +1,16 @@
+# Terraform template (templatefile in main.tf). Rendered with secrets, so it ships as a
+# Swarm secret mounted at /usr/share/kibana/config/kibana.yml.
+server.host: "0.0.0.0"
+server.name: "kibana"
+server.shutdownTimeout: "5s"
+
+# `elasticsearch` is a network alias of the Elasticsearch service on elk_net.
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+elasticsearch.username: "kibana_system"
+elasticsearch.password: "${kibana_system_password}"
+
+xpack.encryptedSavedObjects.encryptionKey: "${encryption_key}"
+xpack.security.encryptionKey: "${encryption_key}"
+xpack.reporting.encryptionKey: "${encryption_key}"
+
+monitoring.ui.container.elasticsearch.enabled: true

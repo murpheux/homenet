@@ -1,0 +1,21 @@
+# Terraform template (templatefile in main.tf). Rendered with secrets, so it ships as a
+# Swarm secret mounted at /usr/share/filebeat/filebeat.yml.
+filebeat.inputs:
+  - type: filestream
+    id: docker-containers
+    paths:
+      - /var/lib/docker/containers/*/*.log
+    prospector.scanner.symlinks: true
+    parsers:
+      - container: ~
+
+processors:
+  - add_docker_metadata:
+      host: "unix:///var/run/docker.sock"
+  - add_host_metadata: ~
+
+# `elasticsearch` is a network alias of the Elasticsearch service on elk_net.
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  username: "filebeat_writer"
+  password: "${filebeat_password}"

@@ -1,0 +1,19 @@
+- name: Install New Relic
+  hosts: servers
+  become: yes
+  roles:
+    - role: newrelic.newrelic_install
+      vars:
+        targets:
+          - infrastructure
+          - logs
+        tags:
+          environment: development
+          team: conawole-dev
+          network: sofcrafthome
+        install_timeout_seconds: 1000
+        verbosity: debug
+  environment:
+    NEW_RELIC_API_KEY: "{{ lookup('env', 'NEW_RELIC_API_KEY') }}"
+    NEW_RELIC_ACCOUNT_ID: 3375015
+    NEW_RELIC_REGION: us

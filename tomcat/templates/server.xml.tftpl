@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Server port="${shutdown_port}" shutdown="SHUTDOWN">
+  <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+  <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+
+  <!-- Main Application Service (Port 8080) -->
+  <Service name="Catalina">
+    <Connector port="${http_port}" protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               redirectPort="8443" />
+
+    <!-- No Realm: nothing here authenticates users (no manager app), and a
+         UserDatabaseRealm needs a UserDatabase in GlobalNamingResources. -->
+    <Engine name="Catalina" defaultHost="localhost">
+      <Host name="localhost" appBase="webapps"
+            unpackWARs="true" autoDeploy="true">
+        <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+               prefix="localhost_access_log" suffix=".txt"
+               pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+      </Host>
+    </Engine>
+  </Service>
+
+  <!-- Dedicated Health Check Service (Port 8081) -->
+  <Service name="CatalinaHealth">
+    <Executor name="healthCheckPool" namePrefix="health-" minSpareThreads="2" maxThreads="5"/>
+    <Connector port="${health_check_port}" protocol="HTTP/1.1" executor="healthCheckPool"
+               connectionTimeout="2000" maxConnections="10"/>
+
+    <Engine name="CatalinaHealth" defaultHost="localhost">
+      <Host name="localhost" appBase="healthapps"
+            unpackWARs="false" autoDeploy="false">
+        <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+               prefix="health_access_log" suffix=".txt"
+               pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+      </Host>
+    </Engine>
+  </Service>
+</Server>

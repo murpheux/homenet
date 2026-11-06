@@ -1,0 +1,14 @@
+variable "domain_name" { type = string }
+variable "network_id" { type = string }
+variable "admin_username" { type = string }
+variable "admin_password" { type = string }
+variable "ai_api_key" { type = string }
+variable "deepseek_api_key" { type = string }
+variable "openai_api_key" { type = string }
+variable "openrouter_api_key" { type = string }
+variable "gemini_api_key" { type = string }
+variable "nfs_server_ip" { type = string }
+variable "nfs_base_path" { type = string }
+variable "nfs_mount_opts" { type = string }
+variable "openclaw_client_htpasswd" { type = string }
+variable "openclaw_gateway_token" { type = string }

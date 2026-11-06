@@ -1,0 +1,11 @@
+---
+- hosts: servers
+  roles:
+    - name: newrelic.newrelic-infra
+      vars:
+        log_file: /opt/logs/newrelic-infra.log
+        verbose: 0
+        nrinfragent_config:
+          license_key: 12345
+          custom_attributes:
+            environment: dev

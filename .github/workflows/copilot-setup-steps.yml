@@ -1,0 +1,61 @@
+name: "Copilot Setup Steps"
+
+# Automatically run the setup steps when they are changed to allow for easy validation, and
+# allow manual testing through the repository's "Actions" tab
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    # Set the permissions to the lowest permissions possible needed for your steps.
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
+
+      - name: Install tflint (Terraform linter)
+        run: |
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
+      - name: Install Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+
+      - name: Install yamllint (YAML validator)
+        run: |
+          sudo apt-get install -y yamllint
+
+      - name: Install Docker CLI
+        run: |
+          sudo apt-get install -y docker.io
+
+      - name: Validate Terraform files
+        run: |
+          find . -name "*.tf" -type f | while read tf_file; do
+            dir=$(dirname "$tf_file")
+            cd "$dir"
+            terraform init -backend=false || true
+            terraform validate || echo "Warning: terraform validate failed for $tf_file"
+            cd - > /dev/null
+          done
+
+      - name: Validate YAML files (Ansible playbooks and configs)
+        run: |
+          yamllint -d '{extends: default, rules: {line-length: disable}}' ansible/*.yaml docker-compose.yml swarm/docker-compose.yml || true
