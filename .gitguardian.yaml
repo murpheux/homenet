@@ -1,0 +1,17 @@
+# ggshield config. Ignored matches are reviewed false positives, pinned by the
+# SHA-256 of the matched string, so a real secret on the same line still fails.
+version: 2
+secret:
+  ignored_matches:
+    # oclaw/scripts/configure.js primaryCandidates: model IDs, not keys
+    - name: model id anthropic/claude-opus-4-5-20251101
+      match: 46441bc15b1cca537510eaec14022eaca071094d3fb0e3b3391d191fc06120e7
+    - name: model id kimi-coding/k2p5
+      match: 866a7557bc98c2cf6cc1fbd80e70ba5bff5ecb8c2414ec87084fd9d3697ece75
+    - name: model id vercel-ai-gateway/anthropic/claude-opus-4.5
+      match: 5c108234094640a81d8bb71b7d7da8915b3bf2aefd33cdf988c3db46123b1d8c
+    - name: model id xiaomi/mimo-v2-flash
+      match: 98d05380a2df9558c95a9b5ccfaee6c20d9552e12d48f059b46d26db3ddf1c8d
+    # tomcat/scripts/create-db-role.sh: ${TF_VAR_app_db_password:?…} usage message, value comes from op run
+    - name: bash parameter expansion in create-db-role.sh
+      match: 5cb57dcbfb87080235fa11c22b5156fa7a049701e3ad0e336646c680000f5328
