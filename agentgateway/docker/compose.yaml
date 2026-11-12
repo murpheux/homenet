@@ -2,7 +2,7 @@ services:
   agentgateway:
     container_name: agentgateway
     restart: unless-stopped
-    image: cr.agentgateway.dev/agentgateway:v1.5.0
+    image: cr.agentgateway.dev/agentgateway:v1.7.0
     # Replace with your user and group IDs, such as the output of: id -u && id -g
     user: "1000:1000"
     ports:

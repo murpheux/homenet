@@ -341,6 +341,7 @@ docker --context=murpheux-scarlet service logs --since 5m softcraftgenia
 | Symptom | Likely cause |
 |---|---|
 | Task exits `127`, `CPU does not support x86-64-v2` | Scheduled on a node other than `softcraftscarlet` |
+| GUI "configuration edit error" when saving | **Expected:** the config is mounted read-only as an immutable Swarm config. Edit `agentgateway.yaml` in the repo and run `make apply` instead |
 | Config change has no effect | Run `make apply`: the config is only updated through Terraform |
 | Task stuck in `Starting`, no logs, port refused | The container can't start, usually a mount or secret it can't get. `make status` shows the error once Docker gives up |
 | A newer task sits in `Ready` while an older one stays in `Starting` | The old task is wedged (seen with the former NFS `/config` mount: a hung NFSv3 mount blocks Docker from stopping it), and the update waits for it to stop. On `scarlet`: `mount -t nfs \| grep agentgw`, then `sudo umount -f -l <mountpoint>` to release it. Last resort: `sudo systemctl restart docker` on `scarlet` (restarts every container there) |
