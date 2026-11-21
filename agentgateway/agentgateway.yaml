@@ -18,7 +18,7 @@ config:
   database:
     url: sqlite:///state/agentgateway.db
   modelCatalog:
-  - file: /config/base-costs.json
+    - file: /config/base-costs.json
   # config.session.key unset: v1.7 generates the MCP session-encryption key and persists it in the database.
 
 gateways:
@@ -36,22 +36,22 @@ gateways:
     protocol: HTTP
 
 routes:
-- name: http-to-https
-  gateways:
-  - http
-  matches:
-  - path:
-      pathPrefix: /
-  policies:
-    requestRedirect:
-      scheme: https
-      authority:
-        port: 9443
-      status: 301
+  - name: http-to-https
+    gateways:
+      - http
+    matches:
+      - path:
+          pathPrefix: /
+    policies:
+      requestRedirect:
+        scheme: https
+        authority:
+          port: 9443
+        status: 301
 
 ui:
   gateways:
-  - default
+    - default
   policies:
     basicAuth:
       mode: strict
@@ -64,195 +64,195 @@ llm:
     apiKey:
       mode: strict
       keys:
-      - keyHash: sha256:3bde9ad6da173c8d3ccc0ecea6351b9799efb34c53d302b5d9fd6369a802f75f
-        metadata:
-          name: admin
-          user: admin
-          role: administrator
-        allowedModels:
-        - '*'
-        budgets:
-        - name: daily-usd-cap
-          limit:
-            unit: USD
-            amount: 20.0
-          window:
-            rolling: 24h
-          onBudgetExceeded: Block
+        - keyHash: sha256:3bde9ad6da173c8d3ccc0ecea6351b9799efb34c53d302b5d9fd6369a802f75f
+          metadata:
+            name: admin
+            user: admin
+            role: administrator
+          allowedModels:
+            - "*"
+          budgets:
+            - name: daily-usd-cap
+              limit:
+                unit: USD
+                amount: 20.0
+              window:
+                rolling: 24h
+              onBudgetExceeded: Block
     guardrails:
       request:
-      # scope pinned to the v1.5/v1.6 default. Adding toolOutput to the reject guard catches
-      # indirect prompt injection from tool results; never add it to the mask guard, which
-      # would rewrite file contents an agent reads (and may write back).
-      - scope: [systemPrompt, messages]
-        regex:
-          action: reject
-          rules:
-          - pattern: (?i)(ignore|disregard|forget|override|bypass)\s+(all\s+|any\s+|your\s+)?(previous|prior|earlier|above|existing|current|original|initial|given|preset)\s+(instructions|rules|guidelines|directives|constraints|restrictions|prompts|programming|configuration)
-          - pattern: (?i)(do anything now|you are an uncensored|jailbreak|bypass your restrictions)
-      - scope: [systemPrompt, messages]
-        regex:
-          action: mask
-          rules:
-          - pattern: \b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b
-          - pattern: \b\d{3}-\d{2}-\d{4}\b
-          - pattern: \b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\b
-          - pattern: \bAKIA[0-9A-Z]{16}\b
-          - pattern: (?i)(api_key|secret|token|password|bearer)\s*[:=]\s*['"][a-zA-Z0-9\-_]{20,}['"]
+        # scope pinned to the v1.5/v1.6 default. Adding toolOutput to the reject guard catches
+        # indirect prompt injection from tool results; never add it to the mask guard, which
+        # would rewrite file contents an agent reads (and may write back).
+        - scope: [systemPrompt, messages]
+          regex:
+            action: reject
+            rules:
+              - pattern: (?i)(ignore|disregard|forget|override|bypass)\s+(all\s+|any\s+|your\s+)?(previous|prior|earlier|above|existing|current|original|initial|given|preset)\s+(instructions|rules|guidelines|directives|constraints|restrictions|prompts|programming|configuration)
+              - pattern: (?i)(do anything now|you are an uncensored|jailbreak|bypass your restrictions)
+        - scope: [systemPrompt, messages]
+          regex:
+            action: mask
+            rules:
+              - pattern: \b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b
+              - pattern: \b\d{3}-\d{2}-\d{4}\b
+              - pattern: \b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\b
+              - pattern: \bAKIA[0-9A-Z]{16}\b
+              - pattern: (?i)(api_key|secret|token|password|bearer)\s*[:=]\s*['"][a-zA-Z0-9\-_]{20,}['"]
       response:
-      - regex:
-          action: reject
-          rules:
-          - pattern: (?i)(hate|kill|violence|harm|illegal)
-      - regex:
-          action: mask
-          rules:
-          - pattern: \bAKIA[0-9A-Z]{16}\b
-          - pattern: (?i)(api_key|secret|token)\s*[:=]\s*['"][a-zA-Z0-9\-_]{20,}['"]
-      - regex:
-          action: audit
-          rules:
-          - pattern: (?i)\b(eval|exec|os\.system|subprocess\.Popen|rm\s+-rf)\s*\(?
+        - regex:
+            action: reject
+            rules:
+              - pattern: (?i)(hate|kill|violence|harm|illegal)
+        - regex:
+            action: mask
+            rules:
+              - pattern: \bAKIA[0-9A-Z]{16}\b
+              - pattern: (?i)(api_key|secret|token)\s*[:=]\s*['"][a-zA-Z0-9\-_]{20,}['"]
+        - regex:
+            action: audit
+            rules:
+              - pattern: (?i)\b(eval|exec|os\.system|subprocess\.Popen|rm\s+-rf)\s*\(?
 
   providers:
-  - name: deepseek
-    provider: deepseek
-    params:
-      apiKey: $DEEPSEEK_API_KEY
-  - name: anthropic
-    provider: anthropic
-    params:
-      apiKey: $ANTHROPIC_API_KEY
-  - name: openai
-    provider: openAI
-    params:
-      apiKey: $OPENAI_API_KEY
-  - name: openrouter
-    provider: openrouter
-    params:
-      apiKey: $OPENROUTER_API_KEY
-  - name: gemini
-    provider: gemini
-    params:
-      apiKey: $GEMINI_API_KEY
-  # v1.6+: Anthropic Messages requests to Ollama are converted to OpenAI Responses
-  # (v1.5: Chat Completions). baseUrl already carries /v1 as v1.6 requires.
-  - name: ollama
-    provider: ollama
-    params:
-      baseUrl: http://10.10.2.100:11434/v1
-  - name: claude-enterprise
-    provider: anthropic
-    params:
-      apiKey: $CLAUDE_ENTERPRISE_API_KEY
-  - name: llm-studio
-    provider:
-      custom:
-        formats:
-        - type: completions
-    params:
-      baseUrl: http://10.10.2.100:8288/v1
-      apiKey: $LM_STUDIO_API_KEY
+    - name: deepseek
+      provider: deepseek
+      params:
+        apiKey: $DEEPSEEK_API_KEY
+    - name: anthropic
+      provider: anthropic
+      params:
+        apiKey: $ANTHROPIC_API_KEY
+    - name: openai
+      provider: openAI
+      params:
+        apiKey: $OPENAI_API_KEY
+    - name: openrouter
+      provider: openrouter
+      params:
+        apiKey: $OPENROUTER_API_KEY
+    - name: gemini
+      provider: gemini
+      params:
+        apiKey: $GEMINI_API_KEY
+    # v1.6+: Anthropic Messages requests to Ollama are converted to OpenAI Responses
+    # (v1.5: Chat Completions). baseUrl already carries /v1 as v1.6 requires.
+    - name: ollama
+      provider: ollama
+      params:
+        baseUrl: http://10.10.2.100:11434/v1
+    - name: claude-enterprise
+      provider: anthropic
+      params:
+        apiKey: $CLAUDE_ENTERPRISE_API_KEY
+    - name: llm-studio
+      provider:
+        custom:
+          formats:
+            - type: completions
+      params:
+        baseUrl: http://10.10.2.100:8288/v1
+        apiKey: $LM_STUDIO_API_KEY
 
   models:
-  # Failover backends for ha/claude-sonnet-5-5. Listed first so no wildcard can catch them.
-  - name: ha-sonnet-enterprise
-    provider:
-      reference: claude-enterprise
-    params:
-      model: claude-sonnet-5-5
-    health:
-      unhealthyExpression: "response.code == 429 || response.code >= 500"
-      eviction:
-        consecutiveFailures: 1
-        duration: 60s
-  - name: ha-sonnet-anthropic
-    provider:
-      reference: anthropic
-    params:
-      model: claude-sonnet-5-5
-    health:
-      unhealthyExpression: "response.code == 429 || response.code >= 500"
-      eviction:
-        consecutiveFailures: 1
-        duration: 60s
-  - name: ha-sonnet-openrouter
-    provider:
-      reference: openrouter
-    params:
-      model: anthropic/claude-sonnet-5.5
-  - name: deepseek-*
-    provider:
-      reference: deepseek
-  - name: claude-*
-    provider:
-      reference: anthropic
-  - name: gpt-*
-    provider:
-      reference: openai
-  - name: gemini-*
-    provider:
-      reference: gemini
-  - name: openai/*
-    provider:
-      reference: openrouter
-  - name: anthropic/*
-    provider:
-      reference: openrouter
-  - name: google/*
-    provider:
-      reference: openrouter
-  - name: z-ai/*
-    provider:
-      reference: openrouter
-  - name: xiaomi/*
-    provider:
-      reference: openrouter
-  - name: minimax/*
-    provider:
-      reference: openrouter
-  - name: meta-llama/*
-    provider:
-      reference: openrouter
-  - name: llm-studio/*
-    provider:
-      reference: llm-studio
-    transformation:
-      model: llmRequest.model.stripPrefix("llm-studio/")
-  - name: claude-ent/*
-    provider:
-      reference: claude-enterprise
-    transformation:
-      model: llmRequest.model.stripPrefix("claude-ent/")
-  - name: '*'
-    provider:
-      reference: ollama
+    # Failover backends for ha/claude-sonnet-5-5. Listed first so no wildcard can catch them.
+    - name: ha-sonnet-enterprise
+      provider:
+        reference: claude-enterprise
+      params:
+        model: claude-sonnet-5-5
+      health:
+        unhealthyExpression: "response.code == 429 || response.code >= 500"
+        eviction:
+          consecutiveFailures: 1
+          duration: 60s
+    - name: ha-sonnet-anthropic
+      provider:
+        reference: anthropic
+      params:
+        model: claude-sonnet-5-5
+      health:
+        unhealthyExpression: "response.code == 429 || response.code >= 500"
+        eviction:
+          consecutiveFailures: 1
+          duration: 60s
+    - name: ha-sonnet-openrouter
+      provider:
+        reference: openrouter
+      params:
+        model: anthropic/claude-sonnet-5.5
+    - name: deepseek-*
+      provider:
+        reference: deepseek
+    - name: claude-*
+      provider:
+        reference: anthropic
+    - name: gpt-*
+      provider:
+        reference: openai
+    - name: gemini-*
+      provider:
+        reference: gemini
+    - name: openai/*
+      provider:
+        reference: openrouter
+    - name: anthropic/*
+      provider:
+        reference: openrouter
+    - name: google/*
+      provider:
+        reference: openrouter
+    - name: z-ai/*
+      provider:
+        reference: openrouter
+    - name: xiaomi/*
+      provider:
+        reference: openrouter
+    - name: minimax/*
+      provider:
+        reference: openrouter
+    - name: meta-llama/*
+      provider:
+        reference: openrouter
+    - name: lms/*
+      provider:
+        reference: llm-studio
+      transformation:
+        model: llmRequest.model.stripPrefix("lms/")
+    - name: claude-ent/*
+      provider:
+        reference: claude-enterprise
+      transformation:
+        model: llmRequest.model.stripPrefix("claude-ent/")
+    - name: "*"
+      provider:
+        reference: ollama
 
   virtualModels:
-  - name: ha/claude-sonnet-5-5
-    routing:
-      failover:
-        targets:
-        - model: ha-sonnet-enterprise
-          priority: 0
-        - model: ha-sonnet-anthropic
-          priority: 1
-        - model: ha-sonnet-openrouter
-          priority: 2
+    - name: ha/claude-sonnet-5-5
+      routing:
+        failover:
+          targets:
+            - model: ha-sonnet-enterprise
+              priority: 0
+            - model: ha-sonnet-anthropic
+              priority: 1
+            - model: ha-sonnet-openrouter
+              priority: 2
 
 mcp:
   gateways:
-  - default
+    - default
   targets:
-  - name: github
-    stdio:
-      cmd: npx
-      args:
-      - -y
-      - '@modelcontextprotocol/server-github'
-  - name: onepassword
-    stdio:
-      cmd: op
-      args:
-      - mcp
-      - server
+    - name: github
+      stdio:
+        cmd: npx
+        args:
+          - -y
+          - "@modelcontextprotocol/server-github"
+    - name: onepassword
+      stdio:
+        cmd: op
+        args:
+          - mcp
+          - server
